@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "trackSamplesChecked": 640,
+  "staticPropMeshOverlaps": {
+    "Prop_Static_Monitor": 0,
+    "Prop_Static_Keyboard": 0,
+    "Prop_Static_Mouse": 0,
+    "Prop_Static_DeskLamp": 0,
+    "Prop_Static_CoffeeMug": 0,
+    "Prop_Static_Succulent": 0,
+    "Prop_Static_TechBooks": 0,
+    "Prop_Static_MiniServer": 0
+  },
+  "totalStaticPropMeshOverlaps": 0,
+  "minOverpassVerticalHeadroom": 2.292,
+  "carHeightReference": 0.46,
+  "sweptEnvelopeViolationsCount": 0,
+  "sweptEnvelopeViolations": []
+}

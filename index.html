@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Desk Racer · 曙光云立体密算版 | Three.js &amp; Blender Pipeline</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpolygon points='32,4 58,18 54,44 32,60 10,44 6,18' fill='%230a2246' stroke='%2300f0ff' stroke-width='4'/%3E%3Cpolygon points='32,14 48,23 45,30 32,22 19,30 16,23' fill='%23ff1936'/%3E%3Ccircle cx='32' cy='38' r='9' fill='%23ffffff'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loader-card">
+        <div class="brand-tag">SUGON CLOUD // GOOGLE DESK RACER PIPELINE</div>
+        <h1>DESK RACER <span class="accent-cyan">立体密算版</span></h1>
+        <p id="loading-status">正在初始化 Rapier3D 物理引擎与加载高精度 .glb 资产...</p>
+        <div class="progress-track">
+          <div id="loading-bar" class="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Launch Modal -->
+    <div id="intro-overlay" class="modal-overlay hidden">
+      <div class="intro-card">
+        <div class="intro-header">
+          <div>
+            <div class="brand-tag">曙光云 SUGON CLOUD × DESK RACER 3D</div>
+            <h2>桌面微缩超算大奖赛</h2>
+            <p class="subtitle">
+              基于 Blender 5.2 高精度建模 + BVH 零穿模校验 + 2K PBR 材质 + Rapier3D 三维坡道悬挂物理 + 自定义 GLSL 立体密算全息护盾
+            </p>
+          </div>
+          <div class="ref-preview-box">
+            <img src="./reference/desk_reference.jpg" alt="Desk Reference" />
+            <span>桌面空间参考图 (按 V 局内对比)</span>
+          </div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="ctrl-item"><div class="kbd-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>方向键</kbd></div><span>油门 · 转向 · 刹车倒车</span></div>
+          <div class="ctrl-item"><div class="kbd-row"><kbd>Space</kbd></div><span>手刹漂移（过弯自动充能密态算力）</span></div>
+          <div class="ctrl-item highlight"><div class="kbd-row"><kbd>Shift</kbd> / <kbd>E</kbd></div><span>开启【立体密算】全息护盾超频加速</span></div>
+          <div class="ctrl-item"><div class="kbd-row"><kbd>C</kbd> 视角 &nbsp;|&nbsp; <kbd>V</kbd> 参考图 &nbsp;|&nbsp; <kbd>R</kbd> 复位 &nbsp;|&nbsp; <kbd>M</kbd> 静音</div><span>快捷辅助控制</span></div>
+        </div>
+
+        <button id="btn-start-race" class="primary-cta">启动引擎 · 发车竞速 (START ENGINE)</button>
+      </div>
+    </div>
+
+    <!-- In-Game HUD -->
+    <div id="hud-layer" class="hidden">
+      <!-- Top Left: Lap & Timing -->
+      <div class="hud-panel top-left">
+        <div class="lap-row">
+          <span class="lap-label">LAP</span>
+          <span id="hud-lap" class="lap-val">1 / 3</span>
+          <span id="hud-cam-badge" class="pill-badge">CHASE CAM</span>
+          <button id="btn-mute" class="icon-btn" title="静音切换 (M)">🔊</button>
+        </div>
+        <div class="time-grid">
+          <div>
+            <small>当前单圈 CURRENT</small>
+            <strong id="hud-cur-time">00:00.00</strong>
+          </div>
+          <div>
+            <small>最佳单圈 BEST</small>
+            <strong id="hud-best-time" class="accent-cyan">--:--.--</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Right: 3D Elevation Minimap -->
+      <div class="hud-panel top-right">
+        <canvas id="minimap-canvas" width="210" height="136"></canvas>
+        <div class="minimap-legend">
+          <span><i class="dot-cyan"></i> 底层赛道</span>
+          <span><i class="dot-red"></i> 3D 高架/坡道</span>
+        </div>
+      </div>
+
+      <!-- Reference Photo PiP Toggle (Key V) -->
+      <div id="ref-pip" class="ref-pip hidden">
+        <img src="./reference/desk_reference.jpg" alt="Reference Desk" />
+        <div class="ref-pip-caption">桌面实拍参考图 [V 关闭]</div>
+      </div>
+
+      <!-- Center Dynamic Countdown & Status Banners -->
+      <div id="hud-countdown" class="center-countdown hidden">3</div>
+      <div id="hud-toast" class="center-toast hidden"></div>
+      <div id="hud-wrong-way" class="wrong-way-banner hidden">⚠️ 方向逆行 · 请调头或按 R 复位</div>
+
+      <!-- Bottom Left: Sugon Cloud 5-Layer Stereo Confidential Computing Gauge -->
+      <div class="hud-panel bottom-left">
+        <div class="shield-header">
+          <span class="shield-title">🛡️ 曙光云 · 立体密算能量矩阵</span>
+          <span id="hud-shield-pct" class="shield-pct">60%</span>
+        </div>
+        <div class="five-layers" id="hud-five-layers">
+          <div class="layer-seg" data-layer="1"><span>L1 密码底座</span></div>
+          <div class="layer-seg" data-layer="2"><span>L2 赤霄安全</span></div>
+          <div class="layer-seg" data-layer="3"><span>L3 密算中台</span></div>
+          <div class="layer-seg" data-layer="4"><span>L4 数据空间</span></div>
+          <div class="layer-seg" data-layer="5"><span>L5 密态超频</span></div>
+        </div>
+        <div id="hud-shield-hint" class="shield-hint ready">按 [Shift / E] 激活六边形密态护盾 +45% 超频冲刺</div>
+      </div>
+
+      <!-- Bottom Right: Speedometer & RPM Tachometer -->
+      <div class="hud-panel bottom-right">
+        <div class="status-pills">
+          <span id="pill-air" class="state-pill air hidden">AIRBORNE 坡道腾空</span>
+          <span id="pill-drift" class="state-pill drift hidden">DRIFT 漂移充能</span>
+          <span id="pill-shield" class="state-pill shield hidden">STEREO SHIELD 密算护盾</span>
+        </div>
+        <div class="speed-row">
+          <div class="gear-box">
+            <small>GEAR</small>
+            <span id="hud-gear">1</span>
+          </div>
+          <div class="speed-readout">
+            <span id="hud-speed">0</span>
+            <small>KM/H</small>
+          </div>
+        </div>
+        <div class="rpm-bar-bg">
+          <div id="hud-rpm-fill" class="rpm-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finish Summary Modal -->
+    <div id="finish-overlay" class="modal-overlay hidden">
+      <div class="finish-card">
+        <div class="brand-tag">SUGON CLOUD GRAND PRIX // FINISHED</div>
+        <h2>🏁 完赛结算 · 立体密算验证通过</h2>
+        <div class="finish-stats">
+          <div class="stat-block">
+            <span>三圈总用时 TOTAL</span>
+            <strong id="fin-total-time">00:00.00</strong>
+          </div>
+          <div class="stat-block">
+            <span>全场最佳单圈 BEST LAP</span>
+            <strong id="fin-best-time" class="accent-cyan">00:00.00</strong>
+          </div>
+        </div>
+        <div id="fin-lap-list" class="lap-breakdown"></div>
+        <button id="btn-restart-race" class="primary-cta">再次挑战 (RACE AGAIN)</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
